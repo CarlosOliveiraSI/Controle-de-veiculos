@@ -63,6 +63,25 @@ def marcar_veiculo_cli():
         atualizar_marcacao(placa, 0, "")
         print("Veículo desmarcado.")
 
+def marcar_veiculo(placa, marcado, observacao=""):
+    """
+    Marca ou desmarca um veiculo para uso pela GUI.
+    marcado = True  -> veiculo nao autorizado / com ocorrencia
+    marcado = False -> volta para normal
+    """
+    placa = placa.upper()
+    v = buscar_veiculo_por_placa(placa)
+    if not v:
+        return False  # Veículo não existe no banco
+
+    if marcado:
+        atualizar_marcacao(placa, 1, observacao)
+    else:
+        atualizar_marcacao(placa, 0, "")
+
+    return True
+
+
 
 # ---------- Núcleo: processar entrada e saída ----------
 
