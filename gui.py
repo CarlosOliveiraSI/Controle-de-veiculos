@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from tkinter import ttk
+from camera_window import abrir_camera_e_capturar  # janela da câmera com EasyOCR
 
 from regras import (
     inicializar_banco,
@@ -11,7 +12,6 @@ from regras import (
     marcar_veiculo,
 )
 
-from placa_ocr import capturar_placa
 from bd import (
     buscar_veiculo_por_placa,
     listar_veiculos_marcados,
@@ -24,42 +24,51 @@ from bd import (
 
 
 def entrada_camera():
-    placa = capturar_placa()
-    if not placa:
-        messagebox.showwarning("Entrada", "Não foi possível ler a placa.")
-        return
+    def receber_placa(placa):
+        if not placa:
+            messagebox.showwarning("Entrada", "Não foi possível ler a placa.")
+            return
 
-    tipo_veiculo = simpledialog.askstring("Tipo de veículo", "Informe o tipo (carro/moto):")
-    tipo_uso = simpledialog.askstring("Tipo de uso", "Informe o uso (particular/oficial):")
-
-    if not tipo_veiculo or not tipo_uso:
-        messagebox.showwarning("Entrada", "Dados incompletos.")
-        return
-
-    processar_entrada(placa, tipo_veiculo.strip().lower(), tipo_uso.strip().lower())
-
-    v = buscar_veiculo_por_placa(placa)
-    if v and v[4] == 1:
-        messagebox.showerror(
-            "⚠ ALERTA – VEÍCULO MARCADO ⚠",
-            f"O veículo {placa.upper()} está MARCADO como NÃO AUTORIZADO!\n"
-            "Ocorrência registrada no sistema."
+        tipo_veiculo = simpledialog.askstring(
+            "Tipo de veículo", "Informe o tipo (carro/moto):"
         )
-    else:
-        messagebox.showinfo("Entrada", f"Entrada registrada para {placa.upper()}.")
+        tipo_uso = simpledialog.askstring(
+            "Tipo de uso", "Informe o uso (particular/oficial):"
+        )
 
-    atualizar_lista_dentro()
+        if not tipo_veiculo or not tipo_uso:
+            messagebox.showwarning("Entrada", "Dados incompletos.")
+            return
+
+        processar_entrada(placa, tipo_veiculo.strip().lower(), tipo_uso.strip().lower())
+
+        v = buscar_veiculo_por_placa(placa)
+        if v and v[4] == 1:
+            messagebox.showerror(
+                "⚠ ALERTA – VEÍCULO MARCADO ⚠",
+                f"O veículo {placa.upper()} está MARCADO como NÃO AUTORIZADO!\n"
+                "Ocorrência registrada no sistema."
+            )
+        else:
+            messagebox.showinfo("Entrada", f"Entrada registrada para {placa.upper()}.")
+
+        atualizar_lista_dentro()
+
+    # abre a janela com a câmera e, ao capturar, chama o callback acima
+    abrir_camera_e_capturar(receber_placa)
 
 
 def saida_camera():
-    placa = capturar_placa()
-    if not placa:
-        messagebox.showwarning("Saída", "Não foi possível ler a placa.")
-        return
+    def receber_placa(placa):
+        if not placa:
+            messagebox.showwarning("Saída", "Não foi possível ler a placa.")
+            return
 
-    processar_saida(placa)
-    messagebox.showinfo("Saída", f"Saída registrada para {placa.upper()}.")
-    atualizar_lista_dentro()
+        processar_saida(placa)
+        messagebox.showinfo("Saída", f"Saída registrada para {placa.upper()}.")
+        atualizar_lista_dentro()
+
+    abrir_camera_e_capturar(receber_placa)
 
 
 def entrada_manual():
@@ -67,8 +76,12 @@ def entrada_manual():
     if not placa:
         return
 
-    tipo_veiculo = simpledialog.askstring("Tipo de veículo", "Informe o tipo (carro/moto):")
-    tipo_uso = simpledialog.askstring("Tipo de uso", "Informe o uso (particular/oficial):")
+    tipo_veiculo = simpledialog.askstring(
+        "Tipo de veículo", "Informe o tipo (carro/moto):"
+    )
+    tipo_uso = simpledialog.askstring(
+        "Tipo de uso", "Informe o uso (particular/oficial):"
+    )
 
     if not tipo_veiculo or not tipo_uso:
         messagebox.showwarning("Entrada", "Dados incompletos.")
@@ -94,7 +107,7 @@ def saida_manual():
         return
 
     processar_saida(placa)
-    messagebox.showinfo("Saída", f"Saída registrada para {placa.upper()}.")
+    messagebox.showinfo("Saída", f"Saída registrada para {placa.upper()}.")
     atualizar_lista_dentro()
 
 
@@ -197,16 +210,32 @@ def abrir_relatorios():
     frame = ttk.Frame(janela, padding=10)
     frame.pack(fill="both", expand=True)
 
-    ttk.Label(frame, text="Escolha um relatório:", font=("Segoe UI", 12, "bold")).pack(pady=10)
+    ttk.Label(
+        frame,
+        text="Escolha um relatório:",
+        font=("Segoe UI", 12, "bold")
+    ).pack(pady=10)
 
-    ttk.Button(frame, text="Veículos MARCADOS",
-               command=lambda: mostrar_relatorio("marcados"), width=40).pack(pady=5)
+    ttk.Button(
+        frame,
+        text="Veículos MARCADOS",
+        command=lambda: mostrar_relatorio("marcados"),
+        width=40,
+    ).pack(pady=5)
 
-    ttk.Button(frame, text="Veículos dentro do campus",
-               command=lambda: mostrar_relatorio("dentro"), width=40).pack(pady=5)
+    ttk.Button(
+        frame,
+        text="Veículos dentro do campus",
+        command=lambda: mostrar_relatorio("dentro"),
+        width=40,
+    ).pack(pady=5)
 
-    ttk.Button(frame, text="Todos os veículos cadastrados",
-               command=lambda: mostrar_relatorio("todos"), width=40).pack(pady=5)
+    ttk.Button(
+        frame,
+        text="Todos os veículos cadastrados",
+        command=lambda: mostrar_relatorio("todos"),
+        width=40,
+    ).pack(pady=5)
 
 
 def mostrar_relatorio(tipo):
@@ -220,21 +249,36 @@ def mostrar_relatorio(tipo):
     if tipo == "marcados":
         dados = listar_veiculos_marcados()
         txt.insert(tk.END, "VEÍCULOS MARCADOS\n\n")
-        for vid, placa, tipo, uso, obs in dados:
-            txt.insert(tk.END, f"{placa} | {tipo} | {uso} | Obs: {obs}\n")
+        if not dados:
+            txt.insert(tk.END, "Nenhum veículo marcado.\n")
+        else:
+            for vid, placa, tipo, uso, obs in dados:
+                txt.insert(tk.END, f"{placa} | {tipo} | {uso} | Obs: {obs}\n")
 
     elif tipo == "dentro":
         dados = listar_veiculos_dentro()
         txt.insert(tk.END, "VEÍCULOS DENTRO DO CAMPUS\n\n")
-        for placa, tipo, uso, entrada in dados:
-            txt.insert(tk.END, f"{placa} | {tipo} | {uso} | Entrada: {entrada}\n")
+        if not dados:
+            txt.insert(tk.END, "Nenhum veículo dentro no momento.\n")
+        else:
+            for placa, tipo, uso, entrada in dados:
+                txt.insert(
+                    tk.END,
+                    f"{placa} | {tipo} | {uso} | Entrada: {entrada}\n"
+                )
 
     elif tipo == "todos":
         dados = listar_todos_veiculos()
         txt.insert(tk.END, "TODOS OS VEÍCULOS CADASTRADOS\n\n")
-        for vid, placa, tipo, uso, marcado in dados:
-            status = "MARCADO" if marcado else "normal"
-            txt.insert(tk.END, f"{placa} | {tipo} | {uso} | {status}\n")
+        if not dados:
+            txt.insert(tk.END, "Nenhum veículo cadastrado.\n")
+        else:
+            for vid, placa, tipo, uso, marcado in dados:
+                status = "MARCADO" if marcado else "normal"
+                txt.insert(
+                    tk.END,
+                    f"{placa} | {tipo} | {uso} | {status}\n"
+                )
 
     txt.config(state="disabled")
 
@@ -256,7 +300,7 @@ def main():
     style = ttk.Style()
     try:
         style.theme_use("clam")
-    except:
+    except Exception:
         pass
 
     style.configure("TButton", font=("Segoe UI", 10), padding=6)
@@ -266,47 +310,52 @@ def main():
     topo = ttk.Frame(root, padding=15)
     topo.pack(fill="x")
 
-    ttk.Label(topo, text="Sistema de Controle de Veículos", style="Title.TLabel").pack()
+    ttk.Label(
+        topo,
+        text="Sistema de Controle de Veículos",
+        style="Title.TLabel"
+    ).pack()
 
     # ----- Área principal -----
-    main = ttk.Frame(root, padding=10)
-    main.pack(fill="both", expand=True)
+    main_frame = ttk.Frame(root, padding=10)
+    main_frame.pack(fill="both", expand=True)
 
     # ----- Ações -----
-    acoes = ttk.Labelframe(main, text="Ações", padding=10)
-    # fica centralizado, não grudado na esquerda
+    acoes = ttk.Labelframe(main_frame, text="Ações", padding=10)
     acoes.pack(pady=10, anchor="center")
 
-    # colunas com peso igual pra dividir melhor os botões
     acoes.grid_columnconfigure((0, 1, 2), weight=1)
 
-    ttk.Button(acoes, text="Entrada (câmera)", command=entrada_camera).grid(
-        row=0, column=0, padx=5, pady=5, sticky="ew"
-    )
-    ttk.Button(acoes, text="Saída (câmera)", command=saida_camera).grid(
-        row=0, column=1, padx=5, pady=5, sticky="ew"
-    )
-    ttk.Button(acoes, text="Histórico da placa", command=mostrar_historico).grid(
-        row=0, column=2, padx=5, pady=5, sticky="ew"
-    )
+    ttk.Button(
+        acoes, text="Entrada (câmera)", command=entrada_camera
+    ).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
-    ttk.Button(acoes, text="Entrada manual", command=entrada_manual).grid(
-        row=1, column=0, padx=5, pady=5, sticky="ew"
-    )
-    ttk.Button(acoes, text="Saída manual", command=saida_manual).grid(
-        row=1, column=1, padx=5, pady=5, sticky="ew"
-    )
-    ttk.Button(acoes, text="Marcar / desmarcar veículo", command=marcar_veiculo_gui).grid(
-        row=1, column=2, padx=5, pady=5, sticky="ew"
-    )
+    ttk.Button(
+        acoes, text="Saída (câmera)", command=saida_camera
+    ).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-    ttk.Button(acoes, text="Relatórios", command=abrir_relatorios).grid(
-        row=2, column=0, columnspan=3, padx=5, pady=10, sticky="ew"
-    )
+    ttk.Button(
+        acoes, text="Histórico da placa", command=mostrar_historico
+    ).grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+
+    ttk.Button(
+        acoes, text="Entrada manual", command=entrada_manual
+    ).grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+
+    ttk.Button(
+        acoes, text="Saída manual", command=saida_manual
+    ).grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+
+    ttk.Button(
+        acoes, text="Marcar / desmarcar veículo", command=marcar_veiculo_gui
+    ).grid(row=1, column=2, padx=5, pady=5, sticky="ew")
+
+    ttk.Button(
+        acoes, text="Relatórios", command=abrir_relatorios
+    ).grid(row=2, column=0, columnspan=3, padx=5, pady=10, sticky="ew")
 
     # ----- Lista de veículos -----
-    lista = ttk.Labelframe(main, text="Veículos dentro do campus", padding=10)
-    # adiciona margem lateral pra não ficar colado na borda
+    lista = ttk.Labelframe(main_frame, text="Veículos dentro do campus", padding=10)
     lista.pack(fill="both", expand=True, padx=40, pady=(0, 10))
 
     texto_box = tk.Text(lista, font=("Consolas", 10), wrap="none", height=12)
@@ -319,7 +368,6 @@ def main():
     atualizar_lista_dentro()
 
     root.mainloop()
-
 
 
 # ======================================================
